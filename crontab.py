@@ -10,8 +10,8 @@ from utility.utils import get_current_month
 load_dotenv("./config/.env")
 LockName = 'cronjob_lock'
 
-GROUP_ID = "Cf83130be1ac1e1f259a6f8418493bf71"
-GROUP_ID_20YEARS='C520e4409adaaebd2188f4288ec04dabd'
+TEST_GROUP_ID = os.getenv('TEST_GROUP_ID')
+GROUP_ID=os.getenv('GROUP_ID')
 
 
 def check_cpu_usage():
@@ -113,7 +113,7 @@ class CrontabController:
                 if not i.save_flag:
                     user = self.query_user_by_user_id(i.user_id)
                     data = {
-                        "line_id":GROUP_ID,
+                        "line_id":TEST_GROUP_ID,
                         "message":"今天是{}\r\n{}這個月存錢了沒?".format(datetime.datetime.now().date(), user.name)
                      }
                     response = requests.post(url='https://bd4a-1-164-82-18.ngrok-free.app/line/send', json=data)
@@ -121,7 +121,7 @@ class CrontabController:
             self.create_all_user_save_progress_by_month()
             if str(datetime.datetime.now().day) == "24":
                 data = {
-                    "line_id":GROUP_ID,
+                    "line_id":TEST_GROUP_ID,
                     "message":"今天是{}\r\n各位這個月存錢了沒?".format(datetime.datetime.now().date())
                 }
                 response = requests.post(url='https://bd4a-1-164-82-18.ngrok-free.app/line/send', json=data)
