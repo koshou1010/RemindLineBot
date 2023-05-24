@@ -1,0 +1,1 @@
+C:\Users\SWM-Koshou\python_env\line_bot\Scripts\Activate.ps1 
