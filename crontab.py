@@ -6,22 +6,22 @@ from model.user_save_progress import UserSaveProgress
 from dotenv import load_dotenv
 from utility.utils import get_current_month
 
+res = load_dotenv("../app/config/.env")
 
-load_dotenv("./config/.env")
 LockName = 'cronjob_lock'
 
 TEST_GROUP_ID = os.getenv('TEST_GROUP_ID')
 GROUP_ID=os.getenv('GROUP_ID')
 
 
-def check_cpu_usage():
-    """
-    Check Currently CPU usage.
-    return true if usage greater than 35.5, which is not a good time to do job.
-    """
-    import psutil
-    cpu_usage = psutil.cpu_percent(interval=1, percpu=False)
-    return cpu_usage > 35.5
+# def check_cpu_usage():
+#     """
+#     Check Currently CPU usage.
+#     return true if usage greater than 35.5, which is not a good time to do job.
+#     """
+#     import psutil
+#     cpu_usage = psutil.cpu_percent(interval=1, percpu=False)
+#     return cpu_usage > 35.5
 
 class DataBaseInit:
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
@@ -31,6 +31,7 @@ class DataBaseInit:
 
     def mysql_connect(self):
         from utility.sql_alchemy import setup
+        print(self.SQLALCHEMY_DATABASE_URI)
         setup(self.SQLALCHEMY_DATABASE_URI)
     
 class CrontabController:
@@ -107,21 +108,22 @@ class CrontabController:
         return query_result
 
     def excute_action(self):
+        print(datetime.datetime.now())
         res = self.query_current_month_created()
         if res:
             for i in res:
                 if not i.save_flag:
                     user = self.query_user_by_user_id(i.user_id)
                     data = {
-                        "line_id":TEST_GROUP_ID,
+                        "line_id":GROUP_ID,
                         "message":"今天是{}\r\n{}這個月存錢了沒?".format(datetime.datetime.now().date(), user.name)
                      }
                     response = requests.post(url='https://bd4a-1-164-82-18.ngrok-free.app/line/send', json=data)
         else:
             self.create_all_user_save_progress_by_month()
-            if str(datetime.datetime.now().day) == "24":
+            if str(datetime.datetime.now().day) == "10":
                 data = {
-                    "line_id":TEST_GROUP_ID,
+                    "line_id":GROUP_ID,
                     "message":"今天是{}\r\n各位這個月存錢了沒?".format(datetime.datetime.now().date())
                 }
                 response = requests.post(url='https://bd4a-1-164-82-18.ngrok-free.app/line/send', json=data)
@@ -130,16 +132,18 @@ class CrontabController:
 
 
 if __name__ =="__main__":
-    if check_cpu_usage():
-        print("CPU usage is too high, pass migration now.")
+    # if check_cpu_usage():
+        # print("CPU usage is too high, pass migration now.")
+    # else:
+    print(os.getcwd())
+    print(res)
+    crontab_controller = CrontabController()
+    if crontab_controller.isLocked():
+        print("Currently Locked.")
     else:
-        crontab_controller = CrontabController()
-        if crontab_controller.isLocked():
-            print("Currently Locked.")
-        else:
-            try:
-                crontab_controller.lock()
-                crontab_controller.excute_action()
-            finally:
-                crontab_controller.unlock()
+        try:
+            crontab_controller.lock()
+            crontab_controller.excute_action()
+        finally:
+            crontab_controller.unlock()
     
